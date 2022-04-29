@@ -26,14 +26,12 @@ module FFJK(
     );
 always@(posedge clk)
 begin
-if(J == K)
+if(J == K) // this is a T flip flop
     case(J)
     1'b1: Q = ~Q;
     default: Q = Q;
     endcase
 else
-    case(J):
-    
-    endcase
+    Q = J; //this is a D flip flop
 end
 endmodule
