@@ -40,7 +40,15 @@ module FFJK_testbench();
  reg K;
  reg clk;
  wire Q;
-FFJK dut(.J(), .K(), .clk(), .Q());
+FFJK dut(.J(J), .K(K), .clk(clk), .Q(Q));
+initial begin
+clk = 0; J = 0; K = 0;
+forever #80 clk = ~clk;
+#80 J = 0; K = 1;
+#40 K = 0;
+#80 J = 1;
+#40 K = 1;
+end
 
 endmodule
 //////////////////////////////////////////////////////////////////////////////////
