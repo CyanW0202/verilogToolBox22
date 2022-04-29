@@ -10,7 +10,7 @@
 // Target Devices: 
 // Tool Versions: 
 // Description: 
-// Using port: the first one in satan7
+// Using port: the first one in spartan7 (cpga196-2)
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
