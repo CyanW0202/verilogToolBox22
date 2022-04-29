@@ -59,4 +59,49 @@ endmodule
 //////////////////////////////////////////////////////////////////////////////////
 // Module Name: JK ff application
 //////////////////////////////////////////////////////////////////////////////////
+module test(
+    input x,
+    input clk,
+    output B
+    );
+wire b, a;
+FFJK jk1(
+.J(x),
+.K(x),
+.clk(clk),
+.Q(b)
+);
+assign a = ~b;
+FFJK jk2(
+.J(b),
+.K(a),
+.clk(clk),
+.Q(B)
+);
+endmodule
+
+//application testbench
+
+
+module test_testbench();
+reg J;
+reg clk;
+wire Q;
+test dut( .x(J), .clk(clk), .B(Q));
+initial begin
+clk = 0; J = 0;
+#40 J = 1;
+#40 J = 0;
+#40 J = 1;
+#40 J = 0;
+#40 J = 1;
+#40 J = 0;
+#40 J = 1;
+#40 J = 0;
+end
+initial begin
+forever #60 clk = ~clk;
+end
+
+endmodule
 
