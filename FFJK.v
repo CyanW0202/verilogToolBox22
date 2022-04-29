@@ -43,13 +43,18 @@ module FFJK_testbench();
 FFJK dut(.J(J), .K(K), .clk(clk), .Q(Q));
 initial begin
 clk = 0; J = 0; K = 0;
-forever #80 clk = ~clk;
-#80 J = 0; K = 1;
+#40 J = 0; K = 1;
 #40 K = 0;
-#80 J = 1;
+#40 J = 1;
+#40 K = 1;
+#40 J = 0; K = 1;
+#40 K = 0;
+#40 J = 1;
 #40 K = 1;
 end
-
+initial begin
+forever #60 clk = ~clk; //clk
+end
 endmodule
 //////////////////////////////////////////////////////////////////////////////////
 // Module Name: JK ff application
