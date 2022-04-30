@@ -36,8 +36,7 @@ endmodule
 module FFT_testbench( );
 reg T;
 reg clk;
-wire Q;
-FFT dut(.T(T), .clk(clk), .Q(Q));
+wire Q1;
 
 initial begin
 T = 0;
@@ -51,5 +50,6 @@ initial begin
 clk = 0;
 forever #40 clk = ~clk;
 end
-endmodule
 
+FFT dut(.T(T), .clk(clk), .Q(Q1));
+endmodule
