@@ -25,3 +25,31 @@ begin
     Q = Q;
 end
 endmodule
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Module Name: FFT_testbench
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module FFT_testbench( );
+reg T;
+reg clk;
+wire Q;
+FFT dut(.T(T), .clk(clk), .Q(Q));
+
+initial begin
+T = 0;
+#22 T = 1;
+#120 T = 0;
+#33 T = 1;
+#80 T = 0;
+
+end
+initial begin
+clk = 0;
+forever #40 clk = ~clk;
+end
+endmodule
+
