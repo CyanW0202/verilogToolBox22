@@ -17,6 +17,7 @@ module FFT(
     input clk,
     output reg Q
     );
+    assign Q = 0;
 always@(negedge clk)
 begin
     if(T)
