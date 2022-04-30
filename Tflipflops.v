@@ -7,7 +7,7 @@
 // Module Name: FFT
 // Revision:
 // Revision 0.01 - File Created
-// Additional Comments:
+// Additional Comments: neg edge T ff
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
