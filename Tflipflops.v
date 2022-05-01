@@ -17,7 +17,9 @@ module FFT(
     input clk,
     output reg Q
     );
-    assign Q = 0;
+initial begin// necessary, without initialization, Q won't respond.
+Q = 0;
+end
 always@(negedge clk)
 begin
     if(T)
@@ -26,6 +28,8 @@ begin
     Q = Q;
 end
 endmodule
+
+
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Module Name: FFT_testbench
