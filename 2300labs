@@ -22,49 +22,36 @@
 
 module counter(
     input clk,
-    output reg Qc1,
-    output reg Qc2,
-    output reg Qc3
+    output Qc1,
+    output Qc2,
+    output Qc3
     );
-    initial begin
-    Qc1 = 0;
-    Qc2 = 0;
-    Qc3 = 0;
-    end    
-    
-    wire qa, qb, qc;//output wire
+  
     wire na, nb, nc; // input wire
         
-     assign na = qb & qc;
-     assign nb = ~qb + qc;
-     assign nc = qa + (qb&~qc);
+     assign na = Qc2 & Qc3;
+     assign nb = ~Qc2 + Qc3;
+     assign nc = Qc1 + (Qc2&~Qc3);
      
     FFT Ta(
     .T(na),
     .clk(clk),
-    .Q(qa)
+    .Q(Qc1)
     
     );
     
     FFT Tb(
     .T(nb),
     .clk(clk),
-    .Q(qb)
+    .Q(Qc2)
     );
     
     FFT Tc(
     .T(nc),
     .clk(clk),
-    .Q(qc)
+    .Q(Qc3)
     );
-    
-    always@(*)
-    begin
-    Qc1 = qa;
-    Qc2 = qb;
-    Qc3 = qc;
-    end
-   
+ 
     
 endmodule
 
