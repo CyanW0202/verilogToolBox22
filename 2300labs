@@ -1,0 +1,109 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 05/03/2022 02:55:49 PM
+// Design Name: 
+// Module Name: counter
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module counter(
+    input clk,
+    output reg Qc1,
+    output reg Qc2,
+    output reg Qc3
+    );
+    initial begin
+    Qc1 = 0;
+    Qc2 = 0;
+    Qc3 = 0;
+    end    
+    
+    wire qa, qb, qc;//output wire
+    wire na, nb, nc; // input wire
+        
+     assign na = qb & qc;
+     assign nb = ~qb + qc;
+     assign nc = qa + (qb&~qc);
+     
+    FFT Ta(
+    .T(na),
+    .clk(clk),
+    .Q(qa)
+    
+    );
+    
+    FFT Tb(
+    .T(nb),
+    .clk(clk),
+    .Q(qb)
+    );
+    
+    FFT Tc(
+    .T(nc),
+    .clk(clk),
+    .Q(qc)
+    );
+    
+    always@(*)
+    begin
+    Qc1 = qa;
+    Qc2 = qb;
+    Qc3 = qc;
+    end
+   
+    
+endmodule
+
+
+//testbench
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 05/03/2022 02:55:49 PM
+// Design Name: 
+// Module Name: counter_testbench
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module counter_testbench( );
+reg clock;
+wire a, b, c;
+counter dut(
+.clk(clock),
+.Qc1(a),
+.Qc2(b),
+.Qc3(c)
+);
+initial begin
+clock = 0;
+forever #80 clock = ~clock;
+end
+endmodule
