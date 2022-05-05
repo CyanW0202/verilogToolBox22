@@ -94,3 +94,30 @@ clock = 0;
 forever #80 clock = ~clock;
 end
 endmodule
+
+//2300 Quiz
+
+module FFD(
+    input D,
+    input clk,
+    output reg Q
+    );
+initial begin
+Q = 0;
+end
+always@(posedge clk)
+begin
+Q = D;
+end
+
+endmodule
+
+module FFDt(input clk, output [1:0] Qi);
+wire[2:0] w;
+assign w[1] = Qi[0];
+assign w[0] = ~Qi[1];
+ 
+FFD d1(.D(w[0]), .clk(clk), .Q(Qi[0]));
+FFD d3(.D(w[1]), .clk(clk), .Q(Qi[1]));
+
+endmodule
