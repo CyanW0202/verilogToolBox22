@@ -1,0 +1,101 @@
+//2300 Quiz11
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 05/09/2022 06:00:28 PM
+// Design Name: 
+// Module Name: counter
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module counter(
+    input x,
+    input clk,
+    output reg [2:0] z
+    );
+    initial begin
+    z = 2'b0;
+    end
+    reg [2:0] pstate = 3'b000;
+    always@(posedge clk)
+    begin
+        case(pstate)
+        3'b000: //A->B(1),A(0)
+        begin
+        pstate <= x?3'b001:3'b000;
+        end
+        3'b001://B->B(1), C(0)
+        begin
+        pstate<= x?3'b011:3'b010;
+        z = 3'b001;
+        end
+        3'b010://C->D(1),A(0)
+        begin
+        pstate<= x?3'b011:3'b000;
+        z = 3'b000;
+        end
+        3'b011://D->B(0),D(1)
+        begin
+        pstate <=x?3'b011:3'b001;
+        z = 3'b101;
+        end
+        default:;
+        endcase
+    end
+endmodule
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 05/09/2022 06:00:28 PM
+// Design Name: 
+// Module Name: counter_testbench
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module counter_testbench();
+reg clock;
+reg X;
+wire[2:0] zout;
+counter dut(
+.x(X),
+.clk(clock),
+.z(zout)
+);
+
+initial begin
+clock = 0;
+forever #80 clock = ~clock;
+end
+
+initial begin
+X = 1;
+#800 X = 0;
+#800 X = 1;
+end
+endmodule
