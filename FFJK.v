@@ -33,6 +33,32 @@ else
     Q = J; //this is a D flip flop
 end
 endmodule
+//JK flip flop with Qn
+module FFJK(
+    input J,
+    input K,
+    input clk,
+    output reg Q,
+    output reg Qn
+    );
+initial begin// necessary, without initialization, Q won't respond.
+Q = 0;
+Qn = ~Q;
+end
+always@(posedge clk)
+begin
+if(J == K) // this is a T flip flop
+    case(J)
+    1'b1: Q = ~Q;
+    default: Q = Q;
+    endcase
+else
+    begin
+    Q = J; //this is a D flip flop
+    end
+Qn = ~Q;    
+end
+endmodule
 
 //JK flipflop testbench
 module FFJK_testbench();
