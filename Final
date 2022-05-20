@@ -1,0 +1,118 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 05/19/2022 10:02:59 PM
+// Design Name: 
+// Module Name: test
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module test(
+    input CW,
+    input clk,
+    output reg R,
+    output reg Y,
+    output reg G,
+    output reg CD
+    );
+    reg pstate;
+    parameter Red = 3'b100;
+    parameter Yellow = 3'b010;
+    parameter Green = 3'b001;
+    initial begin
+    R = 1; G = 0; Y = 0; CD = 0; pstate = Red;
+    end
+    always@(posedge clk)
+    begin
+    if(CW)
+    begin
+    case(pstate)
+    Red:
+    begin
+    R = 1; Y = 0; G = 0;
+    CD <= ~CD;
+    pstate<=Green;
+    end
+    Yellow:
+    begin
+    R = 0; Y = 1; G = 0;
+    pstate<=Red;
+    end
+    Green:
+    begin
+    R = 0; Y = 0; G = 1;
+    CD <= 0;
+    pstate<=Red;
+    end
+    default: pstate<=Red;
+    endcase
+    end
+    else
+    begin
+    pstate <= Red;
+    end
+    end
+endmodule
+
+
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 05/19/2022 10:02:59 PM
+// Design Name: 
+// Module Name: test_testbench
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+
+module test_testbench();
+reg clk;
+reg CW;
+wire R, G, Y;
+wire CD;
+test dut(
+.CW(CW),
+.R(R),
+.Y(Y),
+.G(G),
+.CD(CD),
+.clk(clk)
+);
+initial begin
+clk = 0;
+forever #40 clk = ~clk;
+end
+initial begin
+CW = 0;
+forever #40 CW = ~CW;
+end
+
+
+endmodule
