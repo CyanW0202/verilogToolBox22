@@ -27,3 +27,13 @@ module Decoder(input [6:0] data, output reg [64:0] y);
         y[data] = 1;
     end
 endmodule
+
+/////////////////////////////////////////////////////////////////////////////////
+
+module str(input a,b,c, output f );
+and(g, a,b);
+not(k,b);
+and(h,k,c);
+or(f,g,h);
+endmodule
+
