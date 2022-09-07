@@ -154,5 +154,44 @@ test_data=0;
  #1 test_data =7;
  end
 endmodule
+////////////////////////////////////////
 
+module MUX(s, A, B, F);
+input [2:0] s;
+input [3:0] A, B;
+output reg[3:0] F;
+always @(*)
+case (s)
+0: F = 0;
+1: F = B-A;
+2: F = A-B;
+3: F = A+B;
+4: F = A^B;
+5: F = A|B;
+6: F = A&B;
+7: F = 4'b1111;
+endcase
+endmodule  
+//////////////
+
+module MUX_testbench;
+
+reg[2:0] select;
+reg[3:0] d1, d2;
+wire[3:0] out;
+MUX uut(select, d1, d2, out);
+
+initial begin
+    select = 0;
+    d1 = 4'b1010;
+    d2 = 4'b0011;
+    #1 select = 1;
+    #1 select = 2;
+    #1 select = 3;
+    #1 select = 4;
+    #1 select = 5;
+    #1 select = 6;
+    #1 select = 7;
+    
+end
 
