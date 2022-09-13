@@ -17,18 +17,40 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module adder4(input x[3:0], y[3:0], Cin, output cout, sum1, sum2, sum3, sum0);
-    fulladd add1(Cin, x[0],y[0], sum0,c1);
-    fulladd add2(c1, x[1], y[1],sum1,c2);
-    fulladd add3(c2, x[2],y[2],sum2,c3);
-    fulladd add4(c3, x[3], y[3],sum3,cout); 
+module adder4bits(input Cin, [3:0]x, [3:0]y, output cout, [3:0]s);
+    fulladd add1(Cin, x[0],y[0], s[0],c1);
+    fulladd add2(c1, x[1], y[1],s[1],c2);
+    fulladd add3(c2, x[2],y[2],s[2],c3);
+    fulladd add4(c3, x[3], y[3],s[3],cout); 
 endmodule
+
 
 
 
 module fulladd(input cin,x1,x2, output s, cout);
     //assign f = (x1&x2)|(~x2&x3);
     assign s = x1^x2^cin, cout = (x1&x2)|(x1&cin)|(x2&cin);
+endmodule
+
+
+module adder4nbits_testbench;
+reg[3:0] xin, yin;
+reg c;
+wire[3:0] sum;
+wire out;
+adder4bits uut(.x(xin), .y(yin), .Cin(c), .s(sum), .cout(out));
+
+initial begin
+    xin = 0;
+    yin = 0;
+    c = 0;
+    #1 xin = 1; yin = 1;
+    #1 xin = 15; yin =15;
+    #1 c = 1;
+    #1 xin = 0;
+    #1 yin = 0;
+    
+end
 endmodule
 
 
