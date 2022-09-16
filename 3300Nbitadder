@@ -33,3 +33,70 @@ module nbitsadder(carryin, X, Y, S, carryout, overflow);
   overflow = (X[n-1] & Y[n-1] & ~S[n-1]) | (~X[n-1] & ~Y[n-1] & S[n-1]);
   end
 endmodule
+
+
+
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// 
+// Create Date: 09/16/2022 04:21:00 PM
+// Design Name: 4 bits comparator
+// Module Name: Compare
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module Compare(X, Y, V, N, Z);
+  parameter n = 4;
+  input [n-1:0] X, Y;
+  output reg V, N, Z;
+  reg [n-1:0] S;
+  reg [n:0] C;
+  integer k;
+  always @(X, Y)
+  begin
+
+     C[0] = 1'b1;
+     for (k = 0; k < n;  k = k + 1)
+     begin
+        S[k] = X[k] ^ ~Y[k] ^ C[k];
+        C[k+1] = (X[k] & ~Y[k]) | (X[k] & C[k]) | (~Y[k] & C[k]);
+     end
+     V  = C[n] ^ C[n-1];
+     N = S[n-1];
+     Z = !S;
+  end
+ 
+endmodule
+
+
+
+module compare_testbench;
+wire ovr, neg;
+wire zero;
+reg [3:0] xin, yin;
+Compare uut(.X(xin), .Y(yin), .V(ovr), .N(neg), .Z(zero));
+
+initial begin
+    xin = -2;
+    yin = xin;
+    #1 yin = -1;
+    #1 xin = 6;
+    #1 xin = 7;
+end
+
+
+endmodule
+
+
