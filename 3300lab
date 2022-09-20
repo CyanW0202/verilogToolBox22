@@ -1,0 +1,52 @@
+`timescale 1ns / 1ps
+////////////////////////////////////////
+//The lab4 at 9/20
+//to interpret the decoder, it is not by "value" but indexing out like num[2] = 1, num[3] = 1 would be 8 instead of 3.
+//////////////////////////////////////////
+module lab4(input[2:0] switch, output AN, output[6:0]C);
+    wire[7:0] y;
+    decoder u1(switch, y);
+    segment7_control u2(y, AN, C);
+endmodule
+
+
+module decoder(input [2:0] data, output reg [7:0] y);
+    always @data
+    begin
+        y=0;
+        y[data] = 1;
+    end
+endmodule
+
+module segment7_control(input[7:0]num, output AN,output reg [6:0] C  );
+    assign AN = 1;
+    always@(num)
+    begin
+        case(num)
+            8'b00000001: C = 1;
+            8'b00000010: C = 7'b1001111; 
+            8'b00000100: C = 7'b0010010;
+            8'b00001000: C = 7'b0000110;
+            8'b00010000: C = 7'b1001100;
+            8'b00100000: C = 7'b0100100;
+            8'b01000000: C = 7'b0100000;
+            8'b10000000: C = 7'b0001111;
+        endcase
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module top_testbench;
+reg[2:0] s;
+wire[6:0]ssegd;
+wire on;
+lab4 uut(s, on, ssegd);
+initial begin
+s = 2;
+    #1 s = 1;
+    #1 s = 0;
+end
+endmodule
+
+    
