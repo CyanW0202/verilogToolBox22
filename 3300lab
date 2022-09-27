@@ -1,4 +1,84 @@
 `timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Create Date: 09/27/2022 01:43:37 PM
+// Design Name: 
+// Module Name: top
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module top(input co, input[3:0]X, Y, output [6:0]C, output [7:0]AN); //The top output can't be reg.
+wire cout;
+wire [3:0]summ;
+    addern add(co, X, Y, cout, summ);
+    segD Display(summ, C, AN);
+endmodule
+
+module addern(input co, input [3:0]X, Y, output reg carr, output reg [3:0]S);
+reg [3:0 ]temy;
+    always@(*)
+    begin 
+        temy = co?(~Y+co):Y;
+        {carr,S} = X+temy;
+    end
+endmodule
+
+module segD(input [3:0] S, output reg[6:0]c, output [7:0]an);
+    assign an = 8'b11111110;
+    always@(S)
+    begin
+        case(S)
+           0: c = 7'b0000001;
+           1: c = 7'b1001111; 
+           2: c = 7'b0010010;
+           3: c = 7'b0000110;
+           4: c = 7'b1001100;
+           5: c = 7'b0100100;
+           6: c = 7'b0100000;
+           7: c = 7'b0001111;
+           8: c = 0;
+           9: c = ~(7'b1111011);
+           10: c = ~(7'b1110111);
+           11: c = ~(7'b0011111);
+           12: c = ~(7'b1001110);
+           13: c = ~(7'b0111101);
+           14: c = ~(7'b0111101);
+           15: c = 7'b0111000;
+           default: c = 7'b1111111;
+         endcase
+    end
+endmodule
+
+
+
+module top_testb;
+reg [3:0] x, y;
+reg contrl;
+wire [6:0] can;
+wire [7:0] ann;
+top uut(contrl, x, y, can, ann );
+initial begin
+    x = 4'b0001; contrl = 1; y = 4'b0001;
+    #1 contrl = 0;
+end
+endmodule
+
+
+
+
+
+
+`timescale 1ns / 1ps
 ////////////////////////////////////////
 //The lab4 at 9/20
 //to interpret the decoder, it is not by "value" but indexing out like num[2] = 1, num[3] = 1 would be 8 instead of 3.
