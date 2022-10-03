@@ -1,5 +1,74 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 09/30/2022 03:06:27 PM
+// Design Name: 
+// Module Name: week5_testb
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module week5();
+endmodule
+
+module TFF(input clr, clk, T, output reg q, qn);
+always @(negedge clk)
+begin
+    if(!clr)
+    begin
+        q = 0;
+        qn = ~q;
+    end
+    else
+    begin
+        q = T?~q:q;
+        qn = ~q;
+    end
+end
+     
+endmodule
+
+
+module week5_testb;
+reg t, cr, ck;
+wire qq, qqn;
+TFF uut(.T(t), .clk(ck), .clr(cr),.q(qq), .qn(qqn));
+
+    initial begin
+    {t, cr, ck} = 3'b010;
+        #1 t = ~t;
+        #1 ck = ~ck;
+        #1 t = ~t; 
+        #2 ck = ~ck;
+        #3 ck = ~ck;
+        #1 t = ~t;
+        #2 ck = ~ck;
+        #3 ck = ~ck;
+        #1 t = ~t;
+        #2 ck = ~ck;
+        #1 t = ~t;
+        #2 ck = ~ck;
+        #3 ck = ~ck;
+        #1 t = ~t;        
+    end
+endmodule
+
+
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
 // Create Date: 08/31/2022 01:56:37 PM
 // Design Name: 4bitsAdder
 // Module Name: fulladd
