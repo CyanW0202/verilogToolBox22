@@ -24,20 +24,19 @@ module week5();
 endmodule
 
 module TFF(input clr, clk, T, output reg q, qn);
-always @(negedge clk)
+initial begin
+q = 0;
+end
+always @(negedge clk, negedge clr)
 begin
     if(!clr)
-    begin
         q = 0;
-        qn = ~q;
-    end
     else
     begin
         q = T?~q:q;
-        qn = ~q;
     end
+    qn = ~q;
 end
-     
 endmodule
 
 
