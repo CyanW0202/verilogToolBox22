@@ -3,6 +3,72 @@
 // Company: 
 // Engineer: 
 // 
+// Create Date: 10/05/2022 09:42:50 AM
+// Design Name: 
+// Module Name: JKFF
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module JKFF(input J, K, clk, sclr, output reg Q, reg Qn);
+reg Q = 0; //asynchronous preset
+always@(posedge clk)//synchronous reset
+begin
+    if(!sclr)
+        Q = 0;
+    else
+    begin
+        case({J, K})
+            2'b01: Q <= 0;
+            2'b10: Q <= 1;
+            2'b11: Q <= ~Q;
+            default: Q <= Q; 
+        endcase
+    end
+    Qn = ~Q;
+end
+
+endmodule
+
+
+module JKFF_testbench;
+reg j,k,CLK, nCLR;
+wire q, qn;
+
+JKFF uut( .J(j), .K(k), .clk(CLK), .sclr(nCLR), .Q(q), .Qn(qn));
+
+initial begin
+    {j, k} = 2'b00; CLK=0; nCLR = 1;
+    #2 CLK=~CLK;
+    #1 {j, k} = 2'b01; 
+    #1 CLK=~CLK;
+    #1 {j, k} = 2'b10; nCLR = 0;
+    #1 CLK=~CLK;
+    #2 {j, k} = 2'b11; CLK=~CLK; nCLR = 1;
+    #1 {j, k} = 2'b10;
+    #1 CLK=~CLK; 
+    
+    
+end
+endmodule    
+    
+
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
 // Create Date: 09/30/2022 03:06:27 PM
 // Design Name: 
 // Module Name: week5_testb
