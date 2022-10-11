@@ -3,6 +3,178 @@
 // Company: 
 // Engineer: 
 // 
+// Create Date: 10/11/2022 01:44:18 PM
+// Design Name: 
+// Module Name: vision
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module vision(input sclk, input rA, output[6:0]CA, [7:0] AN);
+slowerClkGen clking(sclk, rA, outsignal, type);
+upcounter counting(outsignal, Q);
+muxdisplay display(Q, type, CA, AN);
+endmodule
+
+module muxdisplay(input switch,[1:0] counter, output reg[6:0]CA, reg [7:0] AN);
+
+always@(*)
+begin
+    case(counter)
+    2'b00: 
+    begin
+        AN = 8'b1111_1110;
+        CA = switch?7'b100_1111:7'b000_1000;
+    end
+    2'b01: 
+    begin
+        AN = 8'b1111_1101;
+        CA = switch?7'b001_0010:7'b110_0000;
+    end
+    2'b10: 
+    begin
+        AN = 8'b1111_1011;
+        CA = switch?7'b000_0110:7'b011_0001;
+    end
+    2'b11: 
+    begin
+        AN = 8'b1111_0111;
+        CA = switch?7'b100_1100:7'b100_0010;
+    end
+    endcase    
+end    
+endmodule
+
+
+module upcounter (input Clock, output reg [1:0] Q);
+reg[1:0] Q = 0;
+reg switch;
+always @(posedge Clock) //Q = 0 when reset is 0.
+begin
+    
+        Q <= Q + 1;//Q = 0~3
+end
+endmodule
+
+
+module slowerClkGen(input clk, resetA, output outsignal, type);
+reg [17:0] counter = 0;
+reg [26:0] counter2 = 0;  
+reg outsignal = 0;
+reg type;
+    always @ (posedge clk) //synchronous reset, clk = 0 when reset is 0.
+    begin
+       if (resetA)
+        begin
+            counter=0;
+            outsignal=0;
+        end
+        else
+        begin
+            counter = counter +1; //every positive edge of clock would +1
+            counter2 = counter2 +1;
+            if (counter == 2) //every 1s toggle, -+- is a wave, toggle twice, so T = 2.5ms, f = 400Hz
+            begin
+                outsignal=~outsignal;
+                counter =0;
+                type = 1;
+            end
+            if (counter2 == 5) //every 1s toggle, -+- is a wave, toggle twice, so T = 2s, f = 0.5Hz
+            begin
+                outsignal=~outsignal;
+                counter2 =0;
+                type = ~type;
+            end
+            
+         end
+    end
+endmodule
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 10/11/2022 03:15:21 PM
+// Design Name: 
+// Module Name: vision_test
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module vision_test;
+reg sclk, rA;
+wire outsignal, type;
+wire[1:0]Q1;
+wire [6:0] CA1;
+wire [7:0] AN1;
+slowerClkGen clking(sclk, rA,outsignal, type);
+upcounter counting(sclk, Q1);
+muxdisplay dis(Q1, type, CA1, AN1);
+
+initial begin
+rA = 0; sclk = 0;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+#2 sclk=~sclk;
+end
+
+endmodule
+
+
+
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
 // Create Date: 10/05/2022 09:42:50 AM
 // Design Name: 
 // Module Name: JKFF
