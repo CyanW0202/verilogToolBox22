@@ -3,6 +3,175 @@
 // Company: 
 // Engineer: 
 // 
+// Create Date: 10/18/2022 02:03:32 PM
+// Design Name: 
+// Module Name: onehr Lab8
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module onehr(input sclk, input rA, output[6:0]CA, output [7:0] AN);
+wire outsignal, secsig, minsig, un;
+wire [1:0] Qp;
+wire [5:0] Qs, Qm;
+slowerClkGen clking(sclk, rA, outsignal, secsig);
+upcounter counting(outsignal, Qp);
+upcounterBCD sec(secsig, Qs,minsig);
+upcounterBCD min(minsig, Qm, un);
+muxdisplay display(Qp,Qs,Qm, CA, AN);
+endmodule
+
+
+
+
+module muxdisplay(input [1:0]counterAN,[5:0]counterCAs, counterCAm, output [6:0]CA, reg [7:0] AN);
+reg [3:0] num;
+always@(*)
+begin
+    case(counterAN)
+    2'b00: 
+    begin
+        AN = 8'b1111_1110;
+        num = counterCAs%10;
+    end
+    2'b01: 
+    begin
+        AN = 8'b1111_1101;
+        num = counterCAs/10;
+    end
+    2'b10: 
+    begin
+        AN = 8'b1111_1011;
+        num = counterCAm%10;
+    end
+    2'b11: 
+    begin
+        AN = 8'b1111_0111;
+        num = counterCAm/10;
+    end
+    endcase    
+end    
+segment7_control CAcontrol(num, CA);
+endmodule
+
+module segment7_control(input[3:0]num, output reg [6:0]C);
+    always@(num)
+    begin
+        case(num)
+            0: C = 1;
+            1: C = 7'b1001111; 
+            2: C = 7'b0010010;
+            3: C = 7'b0000110;
+            4: C = 7'b1001100;
+            5: C = 7'b0100100;
+            6: C = 7'b0100000;
+            7: C = 7'b0001111;
+            8: C = 0;
+            9: C = 7'b0001100;
+        endcase
+    end
+endmodule
+
+module upcounterBCD(input Clock, output [5:0] Qa, output msig);
+reg [5:0] Qa = 0;
+reg [5:0] counter = 50; 
+reg msig = 0;
+always @(posedge Clock)
+begin       
+    Qa = 50 - counter; //counter = 60, Q = 0; counter = 1, Q = 59
+    counter = counter -1;//counter = 59; counter = 1-1 = 0
+    msig = 0;
+    if(counter == 0)//counter = 0,
+    begin
+        counter = 50;//counter = 60
+        msig = 1;
+    end
+end
+
+endmodule
+
+module upcounter (input Clock, output[1:0] Qc); //to output a 2 bits selector
+reg [1:0] Qc = 0;
+always @(posedge Clock) //Q = 0 when reset is 0.
+begin
+    
+        Qc <= Qc + 1;//Q = 0~3
+end
+endmodule
+
+module slowerClkGen(input clk, resetA, output outsignal, type);
+reg [17:0] counter = 0;
+reg [26:0] counter2 = 0;  
+reg outsignal = 0;
+reg type = 0;
+
+    always @ (posedge clk) //synchronous reset, clk = 0 when reset is 0.
+    begin
+       if (resetA)
+        begin
+            counter=0;
+            outsignal=0;
+        end
+        else
+        begin
+            counter = counter +1; //every positive edge of clock would +1
+            counter2 = counter2 +1;
+            if (counter == 12) //every 1s toggle, -+- is a wave, toggle twice, so T = 2.5ms, f = 400Hz
+            begin
+                outsignal=~outsignal;
+                counter =0;
+            end
+            if (counter2 == 30) //every 1s toggle, -+- is a wave, toggle twice, so T = 1s, f = 1Hz
+            begin
+                counter2 =0;
+                type = ~type;
+            end
+            
+         end
+    end
+endmodule
+
+
+module onehr_test;
+reg sysclk, resA;
+//wire ANclk, seclk, minclk, unuse;
+//wire [1:0] select;
+//wire [5:0] sec, min;
+wire[7:0]ANy;
+wire[6:0]CAx;
+onehr uut(sysclk, resA, CAx, ANy);
+//slowerClkGen uut(, ANclk, seclk);
+//upcounter countt(ANclk, select);
+//upcounterBCD secc(seclk, sec, minclk);
+//upcounterBCD minn(minclk, min, unuse);
+//muxdisplay displayy(select,sec,min, CA, AN);
+
+always@(*)
+begin
+    repeat(1200)#1 sysclk = ~sysclk;
+end
+
+initial begin
+    sysclk = 0; resA = 0;
+end
+endmodule
+
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
 // Create Date: 10/11/2022 01:44:18 PM
 // Design Name: Lab7 
 // Module Name: vision
