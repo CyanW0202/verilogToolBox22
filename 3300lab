@@ -5,7 +5,7 @@
 // 
 // Create Date: 10/18/2022 02:03:32 PM
 // Design Name: 
-// Module Name: onehr Lab8
+// Module Name: onehr
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -69,31 +69,29 @@ module segment7_control(input[3:0]num, output reg [6:0]C);
     begin
         case(num)
             0: C = 1;
-            1: C = 7'b1001111; 
-            2: C = 7'b0010010;
-            3: C = 7'b0000110;
-            4: C = 7'b1001100;
-            5: C = 7'b0100100;
-            6: C = 7'b0100000;
-            7: C = 7'b0001111;
+            1: C = 7'b1001111; //4F
+            2: C = 7'b0010010;//12
+            3: C = 7'b0000110;//06
+            4: C = 7'b1001100;//4C
+            5: C = 7'b0100100;//24
+            6: C = 7'b0100000;//20
+            7: C = 7'b0001111;//0F
             8: C = 0;
-            9: C = 7'b0001100;
+            9: C = 7'b0001100;//0C
         endcase
     end
 endmodule
 
 module upcounterBCD(input Clock, output [5:0] Qa, output msig);
-reg [5:0] Qa = 0;
-reg [5:0] counter = 50; 
+reg [5:0] Qa = 0; //before clk, Qa =0
 reg msig = 0;
 always @(posedge Clock)
 begin       
-    Qa = 50 - counter; //counter = 60, Q = 0; counter = 1, Q = 59
-    counter = counter -1;//counter = 59; counter = 1-1 = 0
+    Qa = Qa+1;//Qa = 59+1 = 60
     msig = 0;
-    if(counter == 0)//counter = 0,
+    if(Qa == 60)//Qa = 60,
     begin
-        counter = 50;//counter = 60
+        Qa = 0;//
         msig = 1;
     end
 end
@@ -126,12 +124,12 @@ reg type = 0;
         begin
             counter = counter +1; //every positive edge of clock would +1
             counter2 = counter2 +1;
-            if (counter == 12) //every 1s toggle, -+- is a wave, toggle twice, so T = 2.5ms, f = 400Hz
+            if (counter == 125_000) //every 1s toggle, -+- is a wave, toggle twice, so T = 2.5ms, f = 400Hz
             begin
                 outsignal=~outsignal;
                 counter =0;
             end
-            if (counter2 == 30) //every 1s toggle, -+- is a wave, toggle twice, so T = 1s, f = 1Hz
+            if (counter2 == 50_000_000) //every 1s toggle, -+- is a wave, toggle twice, so T = 1s, f = 1Hz
             begin
                 counter2 =0;
                 type = ~type;
@@ -140,7 +138,6 @@ reg type = 0;
          end
     end
 endmodule
-
 
 module onehr_test;
 reg sysclk, resA;
