@@ -1,7 +1,7 @@
 module alarm( );
 endmodule
 
-module onehr(input sclk, input rA, output[6:0]CA, output [7:0] AN);
+module onehr(input sclk, input rA, output[6:0]CA, output [3:0] AN);
 wire outsignal, secsig, minsig, un;
 wire [1:0] Qp;
 wire [5:0] Qs, Qm;
