@@ -1,4 +1,60 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 11/07/2022 11:32:53 AM
+// Design Name: 
+// Module Name: alarm
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
 module alarm( );
+endmodule
+
+module addTime(input clk, btn, clr, output[3:0] numb);
+reg[3:0] count;
+always@(posedge clk)
+begin
+    if(clr)
+    begin
+        count<=0;
+    end
+    else
+    begin
+        if(btn == 1)
+        begin
+            if(count == 9)
+                count<=0;
+            else
+                count <=count+1;
+        end
+    end
+end
+assign numb = count;
+endmodule
+
+module setTime(input clk, btn, clr, input[3:0] switch, output reg[3:0]ANH);
+always@(posedge clk)
+begin
+    case(switch)
+    4'b0001: ANH = ~switch;
+    4'b0010: ANH = ~switch;
+    4'b0100: ANH = ~switch;
+    4'b1000: ANH = ~switch;
+    endcase
+end
 endmodule
 
 module onehr(input sclk, input rA, output[6:0]CA, output [3:0] AN);
@@ -12,30 +68,29 @@ upcounterBCD min(minsig, Qm, un);
 muxdisplay display(Qp,Qs,Qm, CA, AN);
 endmodule
 
-
-module muxdisplay(input [1:0]counterAN,[5:0]counterCAs, counterCAm, output [6:0]CA, reg [3:0] AN);
+module muxdisplay(input [1:0]counterAN,[5:0]counterCAs, counterCAm, output [6:0]CA, reg [3:0] ANL);
 reg [3:0] num;
 always@(*)
 begin
     case(counterAN)
     2'b00: 
     begin
-        AN = 4'b1110;
+        ANL = 4'b1110;
         num = counterCAs%10;
     end
     2'b01: 
     begin
-        AN = 4'b1101;
+        ANL = 4'b1101;
         num = counterCAs/10;
     end
     2'b10: 
     begin
-        AN = 8'b1011;
+        ANL = 8'b1011;
         num = counterCAm%10;
     end
     2'b11: 
     begin
-        AN = 8'b0111;
+        ANL = 8'b0111;
         num = counterCAm/10;
     end
     endcase    
@@ -114,7 +169,6 @@ endmodule
 //end    
 //endmodule
 
-
 module upcounter (input Clock, output reg [1:0] Q);
 reg[1:0] Q = 0;
 reg switch;
@@ -124,7 +178,6 @@ begin
         Q <= Q + 1;
 end
 endmodule
-
 
 //remove the second clock, we need a switch between set.
 module slowerClkGen(input clk, resetA, output outsignal, type);
@@ -205,10 +258,9 @@ begin
        //number of   FPGA clock periods in one note.
 endmodule   
 
-module MusicSheet( input [9:0] number, 
-output reg [19:0] note,//max ? different musical notes
+module MusicSheet( input [9:0] number, output reg [19:0] note,//max ? different musical notes
 output reg [4:0] duration);
-parameter QUARTER = 5'b00010;//2
+parameter QUARTER = 5'b00010;
 parameter HALF = 5'b00100;
 parameter ONE = 2* HALF;
 parameter TWO = 2* ONE;
