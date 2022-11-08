@@ -23,6 +23,24 @@
 module alarm( );
 endmodule
 
+module displayF(input[3:0] anL, anH, input[6:0]CA, input clk, num, output[6:0] CAF, output[7:0] ANF);
+
+endmodule
+
+module trigger(input clk, alrm_btn, output wire audO, audSD, output reg flash);
+initial begin
+    flash = 0;
+end
+always@(posedge clk)
+begin   
+if(alrm_btn == 1)
+begin
+    flash = ~flash;
+end
+end
+SongPlayer ringtone(clk, alrm_btn, flash, audO, audSD);
+endmodule
+
 module addTime(input clk, btn, clr, output[3:0] numb);
 reg[3:0] count;
 always@(posedge clk)
@@ -132,13 +150,13 @@ end
 
 endmodule
 
-module vision(input sclk, input rA, output[6:0]CA, output [7:0] AN);
-wire outsignal;
-wire [1:0] Qp;
-slowerClkGen clking(sclk, rA, outsignal, type);
-upcounter counting(outsignal, Qp);
-muxdisplay display(type, Qp, CA, AN);
-endmodule
+//module vision(input sclk, input rA, output[6:0]CA, output [7:0] AN);
+//wire outsignal;
+//wire [1:0] Qp;
+//slowerClkGen clking(sclk, rA, outsignal, type);
+//upcounter counting(outsignal, Qp);
+//muxdisplay display(type, Qp, CA, AN);
+//endmodule
 
 ////??
 //module muxdisplay(input switch,[1:0] counter, output reg[6:0]CA, reg [7:0] AN);
@@ -223,32 +241,33 @@ wire [4:0] note, duration;
 wire [19:0] notePeriod;
 parameter clockFrequency = 100_000_000; 
 assign aud_sd = 1'b1;
+
 MusicSheet  mysong(number, notePeriod, duration );
 always @ (posedge clock) 
   begin
-if(reset | ~playSound) 
- begin 
-          counter <=0;  
-          time1<=0;  
-          number <=0;  
-          audioOut <=1;
-      end
-else 
-begin
-counter <= counter + 1; 
-time1<= time1+1;
-if( counter >= notePeriod) 
-   begin
-counter <=0;  
-audioOut <= ~audioOut ; 
-   end //toggle audio output 
-if( time1 >= noteTime) 
-begin
-time1 <=0;  
-number <= number + 1; 
-end  //play next note
- if(number == 64) number <=0; // Make the number reset at the end of the song
-end
+    if(reset | ~playSound) 
+    begin 
+     counter <=0;  
+     time1<=0;  
+     number <=0;  
+     audioOut <=1;
+    end
+    else 
+    begin
+        counter <= counter + 1; 
+        time1<= time1+1;
+        if( counter >= notePeriod) 
+        begin
+            counter <=0;  
+            audioOut <= ~audioOut ; 
+        end //toggle audio output 
+        if( time1 >= noteTime) 
+        begin
+            time1 <=0;  
+            number <= number + 1; 
+        end  //play next note
+        if(number == 64) number <=0; // Make the number reset at the end of the song
+    end
   end
         
 always @(duration)
@@ -260,8 +279,8 @@ endmodule
 
 module MusicSheet( input [9:0] number, output reg [19:0] note,//max ? different musical notes
 output reg [4:0] duration);
-parameter QUARTER = 5'b00010;
-parameter HALF = 5'b00100;
+parameter QUARTER = 5'b00001;//I speed up by half
+parameter HALF = 5'b00010;
 parameter ONE = 2* HALF;
 parameter TWO = 2* ONE;
 parameter FOUR = 2* TWO;
