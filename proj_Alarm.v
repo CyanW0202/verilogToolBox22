@@ -23,27 +23,28 @@
 module alarm( );
 endmodule
 
-module displayF(input[3:0] anL, anH, input[6:0]CA, input clk, num, output[6:0] CAF, output[7:0] ANF);
-
+module displayF(input[3:0] anL, input[3:0]anH, input[6:0]CA, input clk, num, output[6:0] CAF, output[7:0] ANF);
+assign ANF = {anH, anL};
 endmodule
 
 module trigger(input clk, alrm_btn, output wire audO, audSD, output reg flash);
 initial begin
     flash = 0;
 end
+
 always@(posedge clk)
 begin   
-if(alrm_btn == 1)
-begin
-    flash = ~flash;
-end
+    if(alrm_btn == 1)
+    begin
+        flash = ~flash;
+    end
 end
 SongPlayer ringtone(clk, alrm_btn, flash, audO, audSD);
 endmodule
 
 module addTime(input clk, btn, clr, output[3:0] numb);
 reg[3:0] count;
-always@(posedge clk)
+always@(posedge btn)
 begin
     if(clr)
     begin
@@ -63,8 +64,8 @@ end
 assign numb = count;
 endmodule
 
-module setTime(input clk, btn, clr, input[3:0] switch, output reg[3:0]ANH);
-always@(posedge clk)
+module setTime(input[3:0] switch, output reg[3:0]ANH);
+always@(*)
 begin
     case(switch)
     4'b0001: ANH = ~switch;
@@ -75,7 +76,7 @@ begin
 end
 endmodule
 
-module onehr(input sclk, input rA, output[6:0]CA, output [3:0] AN);
+module onehr(input sclk, input rA, output Qp, Qs, Qm);
 wire outsignal, secsig, minsig, un;
 wire [1:0] Qp;
 wire [5:0] Qs, Qm;
@@ -83,10 +84,10 @@ slowerClkGen clking(sclk, rA, outsignal, secsig);
 upcounter counting(outsignal, Qp);
 upcounterBCD sec(secsig, Qs,minsig);
 upcounterBCD min(minsig, Qm, un);
-muxdisplay display(Qp,Qs,Qm, CA, AN);
+//muxdisplay display(Qp,Qs,Qm, CA, AN);
 endmodule
 
-module muxdisplay(input [1:0]counterAN,[5:0]counterCAs, counterCAm, output [6:0]CA, reg [3:0] ANL);
+module muxdisplay(input [2:0]counterAN,[5:0]counterCAs, counterCAm,input[3:0] number, output [6:0]CA, reg [3:0] ANL);
 reg [3:0] num;
 always@(*)
 begin
@@ -187,7 +188,7 @@ endmodule
 //end    
 //endmodule
 
-module upcounter (input Clock, output reg [1:0] Q);
+module upcounter (input Clock, output reg [2:0] Q);
 reg[1:0] Q = 0;
 reg switch;
 always @(posedge Clock) //Q = 0 when reset is 0.
