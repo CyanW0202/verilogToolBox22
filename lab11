@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module Multiplier(clock, reset, command, dataA, dataB, product, done);
+module ShiftLeft(clock, reset, command, dataA, dataB, product, done);
 localparam n=4;
 input clock, reset, command;
 input [n-1:0] dataA; 
