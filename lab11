@@ -20,100 +20,153 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module ShiftLeft(clock, reset, command, dataA, dataB, product, done);
-localparam n=4;
-input clock, reset, command;
-input [n-1:0] dataA; 
-input [n-1:0] dataB;
-output reg [(2*n)-1:0] product;
-output reg done;
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 11/14/2022 11:07:55 AM
+// Design Name: 
+// Module Name: bitCount
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
 
+
+module bitCount(clock, reset, ready, dataA, count, done, CA, AN);
+input clock, reset, ready;
+input [3:0] dataA; 
+output reg [2:0] count;
+output reg done, CA, AN;
+
+endmodule
+
+module bits(clock, reset, ready, dataA, count, done);
+localparam n=4;
+input clock, reset, ready;
+input [n-1:0] dataA; 
+output reg [2:0] count;
+output reg done;
 reg [1:0] state_reg;
 localparam [1:0] s1=2'b01, s2=2'b10, s3=2'b11;
 reg [1:0] state_next;
-reg [n-1:0] registerB, registerB_next;
 reg [2*n-1:0] registerA, registerA_next;
-reg [2*n-1:0] product_next;
+reg [2:0] count_next;//log2(n), but I just calculate it
 reg done_next;
-//initial begin
-//product = 0;
-//state_reg = 0;
-//end
-
-always @(posedge clock)
+wire outsignal;
+slowerClkGen clockG(clock, 1, outsignal);
+always @(posedge outsignal)
        if (reset)
           begin
              state_reg <= s1;
-             product<=0;
+             count<=2'b00;
              registerA<=0;
-             registerB<=0;
-             done=0;
+             done=1'b0;
           end
        else
           begin
              state_reg <= state_next;
-             product<=product_next;
+             count<=count_next;
              registerA<=registerA_next;
-             registerB<=registerB_next;
              done<= done_next;
           end
 always @(*)
 begin
     state_next = state_reg; 
-    product_next=product;
+    count_next=count;
     registerA_next=registerA;
-    registerB_next=registerB;
     done_next=done;
     case (state_reg)
     s1:
     begin
-       if (command==1)
+       if (ready==1)
          begin
            state_next=s2;
            done_next=0;
          end
        else
          begin
-           registerA_next ={4'b0, dataA};
-           registerB_next =dataB;
+           registerA_next =dataA;
+           done_next = 0;
          end
     end
     s2:
     begin
-       if (registerB==0)
+       if (registerA==0)
          begin
            state_next=s3;
          end
        else
         begin
-         if (registerB_next[0]==1'b1)
+         if (registerA_next[0]==1'b1)
           begin
-            product_next<= product + registerA;
+            count_next<= count + 1;
           end
          else //can be omitted
           begin
-           product_next = product;
+           count_next = count;
           end
         end
         registerA_next=registerA<<1;
-        registerB_next=registerB>>1;
     end
-    s3:
+    s3://?????
     begin
       done_next=1;
-      if (command==0)
-         state_next=s1;
+      if(ready == 0)
+        state_next = s1;
+     count_next = 0;
     end
-    
     default:
     begin
         state_next = s1; 
         done_next=0;
     end
     endcase
-end
+end     
 endmodule
 
+module slowerClkGen(input clk, resetA, output outsignal, type);
+reg [17:0] counter = 0;
+reg [27:0] counter2 = 0;  
+reg outsignal = 0;
+reg type;
+initial begin
+type = 1;
+end
+    always @ (posedge clk) //synchronous reset, clk = 0 when reset is 0.
+    begin
+       if (resetA)
+        begin
+            counter=0;
+            outsignal=0;
+        end
+        else
+        begin
+            counter = counter +1; //every positive edge of clock would +1
+            counter2 = counter2 +1;
+            if (counter == 125_000) //every 1s toggle, -+- is a wave, toggle twice, so T = 2.5ms, f = 400Hz
+            begin
+                outsignal=~outsignal;
+                counter =0;
+            end
+            if (counter2 == 100_000_000) //every 1s toggle, -+- is a wave, toggle twice, so T = 1s, f = 1Hz
+            begin
+                counter2 =0;
+                type = ~type;
+            end
+            
+         end
+    end
+endmodule
 
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
@@ -137,16 +190,16 @@ endmodule
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module Multiplier_test;
+module bitCount_test;
 reg clock, reset, command;
-reg [3:0] dataA, dataB;
+reg [3:0] dataA;
 wire done;
-wire [7:0] product;
-Multiplier uut(clock, reset, command, dataA, dataB, product, done);
+wire [2:0] dataB;
+bits uut(clock, reset, command, dataA, dataB, done);
 initial begin
 #1 reset=0;clock=0;
 #1 clock=~clock;
-#1 reset=1; dataA=4'b1101; dataB=4'b1011; clock=~clock;
+#1 reset=1; dataA=4'b1101; clock=~clock;
 #1 clock=~clock;
 #1 clock=~clock;
 #1 reset=0; clock=~clock;
