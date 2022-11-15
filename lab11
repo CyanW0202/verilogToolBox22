@@ -20,42 +20,23 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module bitCount(input clock, rA, s, [3:0]data, output d, [6:0]CA, [7:0]AN);
+module bitCount(input clock, rA, s, [3:0]data, output d, [6:0]CA1, [7:0]AN1);
 wire outsignal, twosec;
 wire [1:0] Qp, Qd;
 wire [3:0] Qs, Qm;
 slowerClkGen clking(clock, 1'b0, outsignal, twosec);
 upcounter counting(outsignal, Qp);
-bit bitc(twosec, rA, s, data, Qs, d);
-muxdisplay display(d, Qp,Qs, CA, AN);
+bit bitc(twosec, rA, s, data, Qm, d);
+muxdisplay display(d, outsignal, Qm, CA1, AN1);
 endmodule
 
-module muxdisplay(input en, [1:0]counterAN, [3:0]counterCAm, output [6:0]CA, reg [7:0] AN);
+module muxdisplay(input en, fastr, [3:0]counterCAm, output [6:0]CA, reg [7:0] AN);
 reg [3:0] num;
 always@(*)
 begin
-    if(en) //enable with d, only display when d = true.
-    begin
-        case(counterAN)
-        2'b00: 
-        begin
-            AN = 8'b1111_1110;
-            num = counterCAm%10;
-        end
-        2'b01: 
-        begin
-            AN = 8'b1111_1101;
-            num = counterCAm/10;
-        end
-        endcase    
-    end
-    else// not d, display L
-    begin
-        AN = 8'b1111_1110;//the loading indicator
-        num = 4'b1111;
-    end
+   num = (en)?counterCAm:4'b1111;
+   AN = 8'b1111_1110;
 end    
-
 segment7_control CAcontrol(num, CA);
 endmodule
 
@@ -97,7 +78,7 @@ output reg done;
 reg [1:0] state_reg;
 localparam [1:0] s1=2'b01, s2=2'b10, s3=2'b11;
 reg [1:0] state_next;
-reg [n-1:0] registerA, registerA_next;
+reg [2*n-1:0] registerA, registerA_next;
 reg [n-1:0] count_next;//log2(n), but I just calculate it
 reg done_next;
 //wire outsignal;
@@ -106,8 +87,8 @@ always @(posedge clock)
        if (reset)
           begin
              state_reg <= s1; //state_reg = 01
-             count<=2'b00;
-             registerA<=0;//registerA = 0x0000
+             count<=0;
+             registerA <=0;//registerA = 0x0000
              done=1'b0;
           end
        else
@@ -133,7 +114,7 @@ begin
          end
        else
          begin
-           registerA_next =dataA;//if user is not ready, load rA_next = A
+           registerA_next ={4'b0, dataA};//if user is not ready, load rA_next = A
            done_next = 0;//stay here
          end
     end
@@ -202,6 +183,7 @@ end
          end
     end
 endmodule
+
 
 
 `timescale 1ns / 1ps
