@@ -1,5 +1,191 @@
 
+module bitcount(input clock, rA, s, [3:0]data, output d, [6:0]CA, [7:0]AN);
+wire outsignal, twosec;
+wire [1:0] Qp, Qd;
+wire [3:0] Qs, Qm;
+slowerClkGen clking(clock, 1'b0, outsignal, twosec);
+upcounter counting(outsignal, Qp);
+bit(twosec, rA, s, data, Qs, d);
+muxdisplay display(d, Qp,Qs, CA, AN);
+endmodule
 
+module muxdisplay(input en, [1:0]counterAN, [3:0]counterCAm, output [6:0]CA, reg [7:0] AN);
+reg [3:0] num;
+always@(*)
+begin
+    if(en) //enable with d, only display when d = true.
+    begin
+        case(counterAN)
+        2'b00: 
+        begin
+            AN = 8'b1111_1110;
+            num = counterCAm%10;
+        end
+        2'b01: 
+        begin
+            AN = 8'b1111_1101;
+            num = counterCAm/10;
+        end
+        endcase    
+    end
+    else
+    begin
+        AN = 8'b1111_1110;//the loading indicator
+        num = 4'b1111;
+    end
+end    
+
+segment7_control CAcontrol(num, CA);
+endmodule
+
+
+module segment7_control(input[3:0]num, output reg [6:0]C);
+    always@(num)
+    begin
+        case(num)
+            0: C = 1;
+            1: C = 7'b1001111; //4F
+            2: C = 7'b0010010;//12
+            3: C = 7'b0000110;//06
+            4: C = 7'b1001100;//4C
+            5: C = 7'b0100100;//24
+            6: C = 7'b0100000;//20
+            7: C = 7'b0001111;//0F
+            8: C = 0;
+            9: C = 7'b0001100;//0C
+            4'b1111: C = 7'b0001110;//000
+        endcase
+    end
+endmodule
+
+module upcounter (input Clock, output[1:0] Qc); //to output a 2 bits selector
+reg [1:0] Qc = 0;
+always @(posedge Clock) //Q = 0 when reset is 0.
+begin
+    
+        Qc <= Qc + 1;//Q = 0~3
+end
+endmodule
+
+module bit(clock, reset, ready, dataA, count, done);
+localparam n=4;
+input clock, reset, ready;
+input [n-1:0] dataA; 
+output reg [n-1:0] count;
+output reg done;
+reg [1:0] state_reg;
+localparam [1:0] s1=2'b01, s2=2'b10, s3=2'b11;
+reg [1:0] state_next;
+reg [n-1:0] registerA, registerA_next;
+reg [n-1:0] count_next;//log2(n), but I just calculate it
+reg done_next;
+//wire outsignal;
+//slowerClkGen clockG(clock, 1, outsignal);
+always @(posedge clock)
+       if (reset)
+          begin
+             state_reg <= s1; //state_reg = 01
+             count<=2'b00;
+             registerA<=0;//registerA = 0x0000
+             done=1'b0;
+          end
+       else
+          begin
+             state_reg <= state_next; 
+             count<=count_next;
+             registerA<=registerA_next;
+             done<= done_next;
+          end
+always @(*)
+begin
+    state_next = state_reg; //state_next = 01
+    count_next=count;// count_next=0000, max = 1010 = d10.
+    registerA_next=registerA;//rA_next = 0000 for reset.
+    done_next=done;//done = 0, done_next = 0;
+    case (state_reg)//state_reg = s1
+    s1:
+    begin
+       if (ready==1)//if input ready == 1
+         begin
+           state_next=s2;//go to s2.
+           done_next=0;//not yet done.
+         end
+       else
+         begin
+           registerA_next =dataA;//if user is not ready, load rA_next = A
+           done_next = 0;//stay here
+         end
+    end
+    s2:
+    begin
+       if (registerA==0)
+         begin
+           state_next=s3;
+         end
+       else
+        begin
+         if (registerA_next[0]==1'b1)
+          begin
+            count_next<= count + 1;
+          end
+         else //can be omitted
+          begin
+           count_next = count;
+          end
+        end
+        registerA_next=registerA>>1;
+    end
+    s3:
+    begin
+      done_next=1;
+      if(ready == 0)
+      begin
+        state_next = s1;
+        count_next = 0;
+      end
+    end
+    default:
+    begin
+        state_next = s1; 
+        done_next=0;
+    end
+    endcase
+end     
+endmodule
+
+module slowerClkGen(input clk, resetA, output outsignal, type);
+reg [17:0] counter = 0;
+reg [27:0] counter2 = 0;  
+reg outsignal = 0;
+reg type;
+initial begin
+type = 1;
+end
+    always @ (posedge clk) //synchronous reset, clk = 0 when reset is 0.
+    begin
+       if (resetA)
+        begin
+            counter=0;
+            outsignal=0;
+        end
+        else
+        begin
+            counter = counter +1; //every positive edge of clock would +1
+            counter2 = counter2 +1;
+            if (counter == 125_000) //every 1s toggle, -+- is a wave, toggle twice, so T = 2.5ms, f = 400Hz
+            begin
+                outsignal=~outsignal;
+                counter =0;
+            end
+            if (counter2 == 100_000_000) //every 1s toggle, -+- is a wave, toggle twice, so T = 2s, f = 1/2Hz
+            begin
+                counter2 =0;
+                type = ~type;
+            end
+            
+         end
+    end
+endmodule
 
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
