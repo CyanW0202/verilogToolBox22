@@ -1,23 +1,4 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 11/08/2022 01:44:37 PM
-// Design Name: 
-// Module Name: Multiplier
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+
 
 
 `timescale 1ns / 1ps
@@ -54,49 +35,49 @@ module bits(clock, reset, ready, dataA, count, done);
 localparam n=4;
 input clock, reset, ready;
 input [n-1:0] dataA; 
-output reg [2:0] count;
+output reg [n-1:0] count;
 output reg done;
 reg [1:0] state_reg;
 localparam [1:0] s1=2'b01, s2=2'b10, s3=2'b11;
 reg [1:0] state_next;
-reg [2*n-1:0] registerA, registerA_next;
-reg [2:0] count_next;//log2(n), but I just calculate it
+reg [n-1:0] registerA, registerA_next;
+reg [n-1:0] count_next;//log2(n), but I just calculate it
 reg done_next;
-wire outsignal;
-slowerClkGen clockG(clock, 1, outsignal);
-always @(posedge outsignal)
+//wire outsignal;
+//slowerClkGen clockG(clock, 1, outsignal);
+always @(posedge clock)
        if (reset)
           begin
-             state_reg <= s1;
+             state_reg <= s1; //state_reg = 01
              count<=2'b00;
-             registerA<=0;
+             registerA<=0;//registerA = 0x0000
              done=1'b0;
           end
        else
           begin
-             state_reg <= state_next;
+             state_reg <= state_next; 
              count<=count_next;
              registerA<=registerA_next;
              done<= done_next;
           end
 always @(*)
 begin
-    state_next = state_reg; 
-    count_next=count;
-    registerA_next=registerA;
-    done_next=done;
-    case (state_reg)
+    state_next = state_reg; //state_next = 01
+    count_next=count;// count_next=0000, max = 1010 = d10.
+    registerA_next=registerA;//rA_next = 0000 for reset.
+    done_next=done;//done = 0, done_next = 0;
+    case (state_reg)//state_reg = s1
     s1:
     begin
-       if (ready==1)
+       if (ready==1)//if input ready == 1
          begin
-           state_next=s2;
-           done_next=0;
+           state_next=s2;//go to s2.
+           done_next=0;//not yet done.
          end
        else
          begin
-           registerA_next =dataA;
-           done_next = 0;
+           registerA_next =dataA;//if user is not ready, load rA_next = A
+           done_next = 0;//stay here
          end
     end
     s2:
@@ -116,14 +97,16 @@ begin
            count_next = count;
           end
         end
-        registerA_next=registerA<<1;
+        registerA_next=registerA>>1;
     end
-    s3://?????
+    s3:
     begin
       done_next=1;
       if(ready == 0)
+      begin
         state_next = s1;
-     count_next = 0;
+        count_next = 0;
+      end
     end
     default:
     begin
@@ -191,20 +174,29 @@ endmodule
 
 
 module bitCount_test;
-reg clock, reset, command;
-reg [3:0] dataA;
-wire done;
-wire [2:0] dataB;
-bits uut(clock, reset, command, dataA, dataB, done);
+reg clk, rset, command;
+reg [3:0] dA; 
+wire [3:0] cnt;
+wire d;
+bitcount uut(clk, rset, command, dA, cnt, d);
 initial begin
-#1 reset=0;clock=0;
-#1 clock=~clock;
-#1 reset=1; dataA=4'b1101; clock=~clock;
-#1 clock=~clock;
-#1 clock=~clock;
-#1 reset=0; clock=~clock;
-#1 command=1;  clock=~clock;
-repeat(10)
-#1 clock=~clock;
+#1 rset=0;clk=0;
+#1 clk=~clk;
+#1 rset=1; dA=4'b1101; clk=~clk;
+#1 clk=~clk;
+#1 clk=~clk;
+#1 rset=0; clk=~clk;
+#1 command=1;  clk=~clk;
+repeat(15)
+#1 clk=~clk;
+
+#1 command = 0; rset = 1; dA = 4'b1000; clk = ~clk;
+#1 clk = ~clk;
+#1 clk = ~clk;rset = 0;
+#1 clk = ~clk;
+#1 command = 1;  clk = ~clk;
+repeat(15)
+#1 clk=~clk;
+
+
 end
-endmodule
