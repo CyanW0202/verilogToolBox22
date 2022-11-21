@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 11/08/2022 01:44:37 PM
+// Create Date: 11/21/2022 11:04:42 AM
 // Design Name: 
-// Module Name: Multiplier
+// Module Name: Parity
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -19,582 +19,79 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+module Parity(input Load, Clock, [7:0]B, output serial, serialo);
+wire Q, pb, boool;
+shift7 sr(B, Load, Clock, Q);
+ParityF pG(~L, Clock, Q, pb);
+mod7count bitprog(Load, Clock,boool);
+assign serial = (boool)?pb:Q;
 
-module Multiplier(clock, reset, command, dataA, dataB, product, done);
-localparam n=4;
-input clock, reset, command;
-input [n-1:0] dataA; 
-input [n-1:0] dataB;
-output reg [(2*n)-1:0] product;
-output reg done;
+endmodule
 
-reg [1:0] state_reg;
-localparam [1:0] s1=2'b01, s2=2'b10, s3=2'b11;
-reg [1:0] state_next;
-reg [n-1:0] registerB, registerB_next;
-reg [2*n-1:0] registerA, registerA_next;
-reg [2*n-1:0] product_next;
-reg done_next;
-//initial begin
-//product = 0;
-//state_reg = 0;
-//end
-
-always @(posedge clock)
-       if (reset)
-          begin
-             state_reg <= s1;
-             product<=0;
-             registerA<=0;
-             registerB<=0;
-             done=0;
-          end
-       else
-          begin
-             state_reg <= state_next;
-             product<=product_next;
-             registerA<=registerA_next;
-             registerB<=registerB_next;
-             done<= done_next;
-          end
-always @(*)
+module ParityF(input L, Clock, w, output reg pbit);//w is the first bit
+reg [3:0] bcount = 4'b0;
+initial begin
+pbit = 0;
+end
+always@(posedge Clock)
 begin
-    state_next = state_reg; 
-    product_next=product;
-    registerA_next=registerA;
-    registerB_next=registerB;
-    done_next=done;
-    case (state_reg)
-    s1:
+    if(~L)
     begin
-       if (command==1)
+        if(w == 1)
+            pbit = ~pbit;
+    end
+end
+endmodule
+
+module mod7count(input en, Clock, output reg c);
+reg [2:0] count;
+initial begin
+count = 3'b0;
+c = 0;
+end
+  always @(posedge Clock)
+  begin
+     if (~en)//if !load, which is shift:
+     begin
+        if(count[0]&count[1]&count[2])c = ~c;          
+        count <= count +1;
+     end
+  end
+endmodule
+
+module shift7 (R, L, Clock, Q);//right shift, Q = first bit of R>>1
+  input [7:0] R; //Load/Shift when L = 1/0 
+  input L, Clock;
+  output reg [3:0] Q;
+  
+  reg [16:0] datar;
+  always @(posedge Clock)
+  begin
+     if (L)
+         datar <= {8'b0,R};
+    else
          begin
-           state_next=s2;
-           done_next=0;
-         end
-       else
-         begin
-           registerA_next ={4'b0, dataA};
-           registerB_next =dataB;
-         end
-    end
-    s2:
-    begin
-       if (registerB==0)
-         begin
-           state_next=s3;
-         end
-       else
-        begin
-         if (registerB_next[0]==1'b1)
-          begin
-            product_next<= product + registerA;
-          end
-         else //can be omitted
-          begin
-           product_next = product;
-          end
+            datar = R>>1;
         end
-        registerA_next=registerA<<1;
-        registerB_next=registerB>>1;
-    end
-    s3:
-    begin
-      done_next=1;
-      if (command==0)
-         state_next=s1;
-    end
-    
-    default:
-    begin
-        state_next = s1; 
-        done_next=0;
-    end
-    endcase
-end
-endmodule
+     Q = datar[0];
+  end
+endmodule 
 
 
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 11/08/2022 01:49:40 PM
-// Design Name: 
-// Module Name: Multiplier_test
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
-
-module Multiplier_test;
-reg clock, reset, command;
-reg [3:0] dataA, dataB;
-wire done;
-wire [7:0] product;
-Multiplier uut(clock, reset, command, dataA, dataB, product, done);
-initial begin
-#1 reset=0;clock=0;
-#1 clock=~clock;
-#1 reset=1; dataA=4'b1101; dataB=4'b1011; clock=~clock;
-#1 clock=~clock;
-#1 clock=~clock;
-#1 reset=0; clock=~clock;
-#1 command=1;  clock=~clock;
-repeat(10)
-#1 clock=~clock;
-end
-endmodule
-
-
-
-
-
-
-
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 10/18/2022 02:03:32 PM
-// Design Name: 
-// Module Name: onehr
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
-
-module onehr(input sclk, input rA, output[6:0]CA, output [7:0] AN);
-wire outsignal, secsig, minsig, un;
-wire [1:0] Qp;
-wire [5:0] Qs, Qm;
-slowerClkGen clking(sclk, rA, outsignal, secsig);
-upcounter counting(outsignal, Qp);
-upcounterBCD sec(secsig, Qs,minsig);
-upcounterBCD min(minsig, Qm, un);
-muxdisplay display(Qp,Qs,Qm, CA, AN);
-endmodule
-
-
-
-
-module muxdisplay(input [1:0]counterAN,[5:0]counterCAs, counterCAm, output [6:0]CA, reg [7:0] AN);
-reg [3:0] num;
-always@(*)
-begin
-    case(counterAN)
-    2'b00: 
-    begin
-        AN = 8'b1111_1110;
-        num = counterCAs%10;
-    end
-    2'b01: 
-    begin
-        AN = 8'b1111_1101;
-        num = counterCAs/10;
-    end
-    2'b10: 
-    begin
-        AN = 8'b1111_1011;
-        num = counterCAm%10;
-    end
-    2'b11: 
-    begin
-        AN = 8'b1111_0111;
-        num = counterCAm/10;
-    end
-    endcase    
-end    
-segment7_control CAcontrol(num, CA);
-endmodule
-
-module segment7_control(input[3:0]num, output reg [6:0]C);
-    always@(num)
-    begin
-        case(num)
-            0: C = 1;
-            1: C = 7'b1001111; //4F
-            2: C = 7'b0010010;//12
-            3: C = 7'b0000110;//06
-            4: C = 7'b1001100;//4C
-            5: C = 7'b0100100;//24
-            6: C = 7'b0100000;//20
-            7: C = 7'b0001111;//0F
-            8: C = 0;
-            9: C = 7'b0001100;//0C
-        endcase
-    end
-endmodule
-
-module upcounterBCD(input Clock, output [5:0] Qa, output msig);
-reg [5:0] Qa = 0; //before clk, Qa =0
-reg msig = 0;
-always @(posedge Clock)
-begin       
-    Qa = Qa+1;//Qa = 59+1 = 60
-    msig = 0;
-    if(Qa == 60)//Qa = 60,
-    begin
-        Qa = 0;//
-        msig = 1;
-    end
-end
-
-endmodule
-
-module upcounter (input Clock, output[1:0] Qc); //to output a 2 bits selector
-reg [1:0] Qc = 0;
-always @(posedge Clock) //Q = 0 when reset is 0.
-begin
-    
-        Qc <= Qc + 1;//Q = 0~3
-end
-endmodule
-
-module slowerClkGen(input clk, resetA, output outsignal, type);
-reg [17:0] counter = 0;
-reg [26:0] counter2 = 0;  
-reg outsignal = 0;
-reg type = 0;
-
-    always @ (posedge clk) //synchronous reset, clk = 0 when reset is 0.
-    begin
-       if (resetA)
-        begin
-            counter=0;
-            outsignal=0;
-        end
-        else
-        begin
-            counter = counter +1; //every positive edge of clock would +1
-            counter2 = counter2 +1;
-            if (counter == 125_000) //every 1s toggle, -+- is a wave, toggle twice, so T = 2.5ms, f = 400Hz
-            begin
-                outsignal=~outsignal;
-                counter =0;
-            end
-            if (counter2 == 50_000_000) //every 1s toggle, -+- is a wave, toggle twice, so T = 1s, f = 1Hz
-            begin
-                counter2 =0;
-                type = ~type;
-            end
-            
-         end
-    end
-endmodule
-
-module onehr_test;
-reg sysclk, resA;
-//wire ANclk, seclk, minclk, unuse;
-//wire [1:0] select;
-//wire [5:0] sec, min;
-wire[7:0]ANy;
-wire[6:0]CAx;
-onehr uut(sysclk, resA, CAx, ANy);
-//slowerClkGen uut(, ANclk, seclk);
-//upcounter countt(ANclk, select);
-//upcounterBCD secc(seclk, sec, minclk);
-//upcounterBCD minn(minclk, min, unuse);
-//muxdisplay displayy(select,sec,min, CA, AN);
-
-always@(*)
-begin
-    repeat(1200)#1 sysclk = ~sysclk;
-end
+module parityArc_test;
+reg LL, CLK;
+reg [7:0] b;
+wire parity;
+Parity uut(LL, CLK, b, parity);
 
 initial begin
-    sysclk = 0; resA = 0;
-end
-endmodule
-
-
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 10/11/2022 01:44:18 PM
-// Design Name: Lab7 
-// Module Name: vision
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
-
-module vision(input sclk, input rA, output[6:0]CA, output [7:0] AN);
-wire outsignal;
-wire [1:0] Qp;
-slowerClkGen clking(sclk, rA, outsignal, type);
-upcounter counting(outsignal, Qp);
-muxdisplay display(type, Qp, CA, AN);
-endmodule
-
-module muxdisplay(input switch,[1:0] counter, output reg[6:0]CA, reg [7:0] AN);
-
-always@(*)
-begin
-    case(counter)
-    2'b00: 
-    begin
-        AN = 8'b1111_1110;
-        CA = switch?7'b100_1111:7'b000_1000;
-    end
-    2'b01: 
-    begin
-        AN = 8'b1111_1101;
-        CA = switch?7'b001_0010:7'b110_0000;
-    end
-    2'b10: 
-    begin
-        AN = 8'b1111_1011;
-        CA = switch?7'b000_0110:7'b011_0001;
-    end
-    2'b11: 
-    begin
-        AN = 8'b1111_0111;
-        CA = switch?7'b100_1100:7'b100_0010;
-    end
-    endcase    
-end    
-endmodule
-
-
-module upcounter (input Clock, output reg [1:0] Q);
-reg[1:0] Q = 0;
-reg switch;
-always @(posedge Clock) //Q = 0 when reset is 0.
-begin
-    
-        Q <= Q + 1;//Q = 0~3
-end
-endmodule
-
-
-module slowerClkGen(input clk, resetA, output outsignal, type);
-reg [17:0] counter = 0;
-reg [26:0] counter2 = 0;  
-reg outsignal = 0;
-reg type;
-initial begin
-type = 1;
-end
-    always @ (posedge clk) //synchronous reset, clk = 0 when reset is 0.
-    begin
-       if (resetA)
-        begin
-            counter=0;
-            outsignal=0;
-        end
-        else
-        begin
-            counter = counter +1; //every positive edge of clock would +1
-            counter2 = counter2 +1;
-            if (counter == 125_000) //every 1s toggle, -+- is a wave, toggle twice, so T = 2.5ms, f = 400Hz
-            begin
-                outsignal=~outsignal;
-                counter =0;
-            end
-            if (counter2 == 50_000_000) //every 1s toggle, -+- is a wave, toggle twice, so T = 2s, f = 0.5Hz
-            begin
-                outsignal=~outsignal;
-                counter2 =0;
-                type = ~type;
-            end
-            
-         end
-    end
-endmodule
-
-
-
-module vision_test;
-reg sclk, rA;
-//wire outsignal, tp;
-//wire[1:0]Q1;
-wire [6:0] CA1;
-wire [7:0] AN1;
-//slowerClkGen clking(sclk, rA, outsignal, tp);
-//upcounter counting(sclk, Q1);
-//muxdisplay dis(tp, Q1, CA1, AN1);
-
-vision uut(sclk, rA, CA1, AN1);
-
-always@(*)
-begin
-    repeat(50) #1 sclk = ~sclk;
-end
-
-initial begin
-rA = 1; sclk = 0;
-#1 rA = ~rA;
+LL = 0; CLK = 0; b= 8'b0;
+#1 b = 8'b0100_1111;
+#1 LL = 1;
+repeat(60)
+#1 CLK=~CLK;
 
 end
-
 endmodule
 
 
-
-
-
-
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Create Date: 09/27/2022 01:43:37 PM
-// Design Name: 
-// Module Name: top
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
-
-module top(input co, input[3:0]X, Y, output [6:0]C, output [7:0]AN); //The top output can't be reg.
-wire cout;
-wire [3:0]summ;
-    addern add(co, X, Y, cout, summ);
-    segD Display(summ, C, AN);
-endmodule
-
-module addern(input co, input [3:0]X, Y, output reg carr, output reg [3:0]S);
-reg [3:0 ]temy;
-    always@(*)
-    begin 
-        temy = co?(~Y+co):Y;
-        {carr,S} = X+temy;
-    end
-endmodule
-
-module segD(input [3:0] S, output reg[6:0]c, output [7:0]an);
-    assign an = 8'b11111110;
-    always@(S)
-    begin
-        case(S)
-           0: c = 7'b0000001;
-           1: c = 7'b1001111; 
-           2: c = 7'b0010010;
-           3: c = 7'b0000110;
-           4: c = 7'b1001100;
-           5: c = 7'b0100100;
-           6: c = 7'b0100000;
-           7: c = 7'b0001111;
-           8: c = 0;
-           9: c = ~(7'b1111011);
-           10: c = ~(7'b1110111);
-           11: c = ~(7'b0011111);
-           12: c = ~(7'b1001110);
-           13: c = ~(7'b0111101);
-           14: c = ~(7'b0111101);
-           15: c = 7'b0111000;
-           default: c = 7'b1111111;
-         endcase
-    end
-endmodule
-
-
-
-module top_testb;
-reg [3:0] x, y;
-reg contrl;
-wire [6:0] can;
-wire [7:0] ann;
-top uut(contrl, x, y, can, ann );
-initial begin
-    x = 4'b0001; contrl = 1; y = 4'b0001;
-    #1 contrl = 0;
-end
-endmodule
-
-
-
-
-
-
-`timescale 1ns / 1ps
-////////////////////////////////////////
-//The lab4 at 9/20
-//to interpret the decoder, it is not by "value" but indexing out like num[2] = 1, num[3] = 1 would be 8 instead of 3.
-//////////////////////////////////////////
-module lab4(input[2:0] switch, output AN, output[6:0]C);
-    wire[7:0] y;
-    decoder u1(switch, y);
-    segment7_control u2(y, AN, C);
-endmodule
-
-
-module decoder(input [2:0] data, output reg [7:0] y);
-    always @data
-    begin
-        y=0;
-        y[data] = 1;
-    end
-endmodule
-
-module segment7_control(input[7:0]num, output AN,output reg [6:0] C  );
-    assign AN = 1;
-    always@(num)
-    begin
-        case(num)
-            8'b00000001: C = 1;
-            8'b00000010: C = 7'b1001111; 
-            8'b00000100: C = 7'b0010010;
-            8'b00001000: C = 7'b0000110;
-            8'b00010000: C = 7'b1001100;
-            8'b00100000: C = 7'b0100100;
-            8'b01000000: C = 7'b0100000;
-            8'b10000000: C = 7'b0001111;
-        endcase
-    end
-    
-//////////////////////////////////////////////////////////////////////////////////
-
-
-module top_testbench;
-reg[2:0] s;
-wire[6:0]ssegd;
-wire on;
-lab4 uut(s, on, ssegd);
-initial begin
-s = 2;
-    #1 s = 1;
-    #1 s = 0;
-end
-endmodule
-
-    
