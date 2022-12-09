@@ -117,3 +117,30 @@ module db_fsm
    end
 
 endmodule
+
+/*
+Could be use when you need to control the switch input.
+*/
+module inputBtnCtl(input clk,  bttn,[3:0]switch, output wire btnSignl, output swValid);
+wire[2:0] swCtn;
+wire reset;
+Parity bcount(clk,switch, swCtn); //when there is more than 1 sw, btn doesn't not count any input.
+assign reset = (swCtn>1)?1:0; 
+db_fsm dbounce(clk, reset, bttn, btnSignl);
+assign swValid = reset;
+endmodule
+
+module Parity(input Clock,[3:0]B, output reg[2:0] serial);
+integer i;
+reg[2:0] s;
+always@(posedge Clock)
+begin
+    s = 0;
+    for(i = 0; i<4; i = i+1)
+    begin
+        s = s + B[i]; 
+    end
+    serial = s;
+end
+endmodule
+
