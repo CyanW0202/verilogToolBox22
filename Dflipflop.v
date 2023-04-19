@@ -6,10 +6,10 @@
 // 
 // Create Date: 04/30/2022 10:40:50 PM
 // Module Name: FFD
-// Revision:
-// Revision 0.01 - File Created
+// Revision: 
 // Additional Comments: pos edge D ff
-// 
+// output = input at rising.
+// Use for building memory 
 //////////////////////////////////////////////////////////////////////////////////
 
 
