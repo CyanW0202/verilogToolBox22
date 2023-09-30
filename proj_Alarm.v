@@ -1,81 +1,174 @@
 module alarm( );
 endmodule
 
-module onehr(input sclk, input rA, output[6:0]CA, output [3:0] AN);
-wire outsignal, secsig, minsig, un;
-wire [1:0] Qp;
-wire [5:0] Qs, Qm;
-slowerClkGen clking(sclk, rA, outsignal, secsig);
-upcounter counting(outsignal, Qp);
-upcounterBCD sec(secsig, Qs,minsig);
-upcounterBCD min(minsig, Qm, un);
-muxdisplay display(Qp,Qs,Qm, CA, AN);
+//debouncer
+module top(
+    input logic clk, reset,
+    input logic btn,
+    output logic [7:0] btn_count
+    );
+    
+    // signal declaration
+    logic db;
+    logic btn_tick;
+    
+    // instantiate modules
+    early_debouncer btn_debouncer (
+        .clk(clk),
+        .reset(reset),
+        .sw(btn),
+        .db(db)
+        );
+        
+    rising_edge_detect_mealy btn_edge (
+        .clk(clk),
+        .reset(reset),
+        .level(btn),
+        .tick(btn_tick)
+        );
+        
+    bcd_counter_2digits #(.N(8)) btn_counter (
+        .clk(clk),
+        .reset(reset),
+        .en(btn_tick),
+        .q(btn_count),
+        .max_tick()
+        ); 
+    
 endmodule
 
-
-module muxdisplay(input [1:0]counterAN,[5:0]counterCAs, counterCAm, output [6:0]CA, reg [3:0] AN);
-reg [3:0] num;
-always@(*)
-begin
-    case(counterAN)
-    2'b00: 
+//decouncer
+module early_debouncer(
+    input logic clk, reset,
+    input logic sw,
+    output logic db
+    );
+    
+    typedef enum {Zero, Wait0_1, Wait0_2, Wait0_3, One, Wait1_1, Wait1_2, Wait1_3} state_type;
+    
+    // signal declaration
+    state_type state_reg, state_next;
+    logic m_tick;
+    
+    // instantiate timer
+    mod_counter #(.M(1_000_000)) TIMER_10ms
+        (
+        .clk(clk),
+        .reset(reset),
+        .q(),
+        .max_tick(m_tick)
+        );
+    
+    // [1] state register
+    always_ff @ (posedge clk, posedge reset)
     begin
-        AN = 4'b1110;
-        num = counterCAs%10;
+        if (reset)
+            state_reg <= Zero;
+        else
+            state_reg <= state_next;
     end
-    2'b01: 
+    
+    // [2] next-state logic
+    always_comb
     begin
-        AN = 4'b1101;
-        num = counterCAs/10;
-    end
-    2'b10: 
-    begin
-        AN = 8'b1011;
-        num = counterCAm%10;
-    end
-    2'b11: 
-    begin
-        AN = 8'b0111;
-        num = counterCAm/10;
-    end
-    endcase    
-end    
-segment7_control CAcontrol(num, CA);
-endmodule
-
-module segment7_control(input[3:0]num, output reg [6:0]C);
-    always@(num)
-    begin
-        case(num)
-            0: C = 1;
-            1: C = 7'b1001111; //4F
-            2: C = 7'b0010010;//12
-            3: C = 7'b0000110;//06
-            4: C = 7'b1001100;//4C
-            5: C = 7'b0100100;//24
-            6: C = 7'b0100000;//20
-            7: C = 7'b0001111;//0F
-            8: C = 0;
-            9: C = 7'b0001100;//0C
+        case (state_reg)
+            Zero:   
+                if(sw)
+                    state_next = Wait0_1;
+                else
+                    state_next = Zero;
+            Wait0_1:
+                if(m_tick)
+                    state_next = Wait0_2;
+                else
+                    state_next = Wait0_1;
+            Wait0_2:
+                if(m_tick)
+                    state_next = Wait0_3;
+                else
+                    state_next = Wait0_2;
+            Wait0_3:
+                if(m_tick)
+                    if(sw)
+                        state_next = One;
+                    else
+                        state_next = Zero;
+                else
+                    state_next = Wait0_3;
+            One:
+                if(sw)
+                    state_next = One;
+                else
+                    state_next = Wait1_1;
+            Wait1_1:
+                if(m_tick)
+                    state_next = Wait1_2;
+                else
+                    state_next = Wait1_1;
+            Wait1_2:
+                if(m_tick)
+                    state_next = Wait1_3;
+                else
+                    state_next = Wait1_2;
+            Wait1_3:
+                if(m_tick)
+                    if(~sw)
+                        state_next = Zero;
+                    else
+                        state_next = One;
+                else
+                    state_next = Wait1_3;
+            default: state_next = Zero;
         endcase
+            
     end
+    
+    // [3] Mealy output
+    
+    
+    // [4] Moore output
+    assign db = (state_reg == Wait0_1) || (state_reg == Wait0_2) || (state_reg == Wait0_3) || (state_reg == One);
 endmodule
 
-module upcounterBCD(input Clock, output [5:0] Qa, output msig);
-reg [5:0] Qa = 0; //before clk, Qa =0
-reg msig = 0;
-always @(posedge Clock)
-begin       
-    Qa = Qa+1;//Qa = 59+1 = 60
-    msig = 0;
-    if(Qa == 60)//Qa = 60,
+
+//count to 64, then tick
+module modulus_counter
+    (
+    input logic clk, reset,
+    input logic [7:0] mn,
+    output logic max_tick
+    );
+    
+    // signal declaration
+    logic [7:0] r_reg, r_next;      
+    logic [7:0] count;
+    
+    // register segment
+    always_ff @ (posedge clk, posedge reset)
     begin
-        Qa = 0;//
-        msig = 1;
-    end
-end
-
+        if (reset)
+         begin
+            r_reg <= 0;
+         end
+        else
+         begin
+            r_reg <= r_next;
+         end
+    end    
+        
+    // next state logic
+    assign r_next = (r_reg == mn-1)? 8'd0 : r_reg + 1;      // if at max count, reset to 0, else increment
+    assign count = r_reg;
+        
+        
+    //output logic
+    assign max_tick = (r_reg == mn-1)? 1'b1 : 1'b0;         // if at max count, set to 1, else set to 0
+    
 endmodule
+
+
+
+
 
 module vision(input sclk, input rA, output[6:0]CA, output [7:0] AN);
 wire outsignal;
